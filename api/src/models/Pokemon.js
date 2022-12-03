@@ -31,11 +31,11 @@ module.exports = (sequelize) => {
       allowNull: true
     },
     height: {
-      type : DataTypes.FLOAT,
+      type : DataTypes.INTEGER,
       allowNull: true
     },
     weight: {
-      type : DataTypes.FLOAT,
+      type : DataTypes.INTEGER,
       allowNull: true
     },
     created: {

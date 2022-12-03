@@ -52,7 +52,19 @@ const getNextInfo = async(next, pokemons) => {
     return newData
 }
 
-const getAllPokemons = async() => {
+const getDbInfo = async() => {
+    return await Pokemon.findAll({
+       include:{
+           model: Type,
+           attributes: ['name'],
+           through: {
+               attributes: [],
+           }
+       }
+   })
+}
+
+const getPokemons = async() => {
     const initialData = await getInitialApiInfo()
     const nextData = await getNextInfo(initialData.next,initialData.pokemons)
     
@@ -60,12 +72,17 @@ const getAllPokemons = async() => {
         const pokemonUrl = await axios.get(e.url)
         const pokemonStatsData = await pokemonUrl.data
         let stats = []
+        let types = []
 
         await pokemonStatsData.stats.map(e => {
             stats.push(e.base_stat)
         })
+        await pokemonStatsData.types.map(e => {
+            types.push(e.type.name)
+        })
 
         return {
+            id: pokemonStatsData.id,
             name: pokemonStatsData.name,
             health: stats[0],
             attack: stats[1],
@@ -73,13 +90,21 @@ const getAllPokemons = async() => {
             speed: stats[5],
             height: pokemonStatsData.height,
             weight: pokemonStatsData.weight,
+            type: types,
             created: false
         }
         
     })
 
     return Promise.all(pokemons)
-   
+}
+
+const getAllPokemons = async() => {
+    const apiPokemons = await getPokemons()
+    const dbPokemons = await getDbInfo()
+    const allPokemons = apiPokemons.concat(dbPokemons)
+
+    return allPokemons
 }
 
 const getTypes = async() => {
@@ -87,7 +112,7 @@ const getTypes = async() => {
     const data = await urlTypes.data
     const types = []
 
-    data.results.map(e => {
+    await data.results.map(e => {
         types.push(e.name)
     })
 
@@ -95,40 +120,100 @@ const getTypes = async() => {
 }
 
 router.get('/pokemons', async(req, res) => {
-    const pokemonsTotal = await getAllPokemons()
-    const havePokemons = await Pokemon.findAll()
-    console.log(havePokemons.length)
-    //return res.json(pokemonsTotal)
-       try {
-        if(havePokemons.length === 0){
-            console.log('dentro del if')
-            await pokemonsTotal.map(async (e) => {
-                await Pokemon.findOrCreate({
-                    where:{
+    const {name} = req.query
+    const totalPokemons = await getAllPokemons()
 
-                        name: e.name,
-                        health: e.health,
-                        attack: e.attack,
-                        defense: e.defense,
-                        speed: e.speed,
-                        height: e.height,
-                        weight: e.weight,
-                        created: e.created
-                    }
-                })
-            })
-            console.log('ok')
+    try {
+        if(name){
+            //Si existe el nombre devuelvo:
+            let pokemon = await totalPokemons.filter((e) => 
+                e.name.toLowerCase().includes(name.toLowerCase())
+                )
+            pokemon.length
+                ? res.status(200).send(pokemon)
+                :res.status(404).send("El pokemon ingresado no existe")
         }else{
-            console.log('pipipi')
-            return res.json(havePokemons);
+            //Si no existe el nombre, devuelvo todos los pokemons
+            return res.json(totalPokemons)
         }
     } catch (error) {
-        res.send(error)
-    }   
+        res.status(404).send(error)
+    }
+})
+
+router.get('/pokemons/:id', async(req, res) => {
+    const {id} = req.params
+    const totalPokemons = await getAllPokemons()
+
+    try {
+        if(id){
+            let pokemon = await totalPokemons.filter(e => 
+                e.id == id
+                )
+            pokemon.length
+                ? res.status(200).send(pokemon)
+                : res.status(404).send("La id ingresada no coincide con ningun pokemon")
+        }
+    } catch (error) {
+        res.status(404).send(error)
+    }
 })
 
 router.get('/types', async(req, res) => {
-    
+    const totalTypes = await getTypes()
+    const haveTypes = await Type.findAll()
+
+    try {
+        if(haveTypes.length === 0){
+            await totalTypes.map(async(e) => {
+                await Type.findOrCreate({
+                    where:{
+                        name: e,
+                    }
+                })
+            })
+        }else{
+            return res.json(haveTypes)
+        }
+    } catch (error) {
+        res.status(404).send(error)
+    }
 })
 
+/* router.get('/test', async(req, res) => {
+    Pokemon.findAll({
+        include: {
+            model: Type,
+            attributes: ['name'],
+            throught: {
+                attributes: ['name'],
+            }
+        },
+    
+    }).then(pokes => res.json(pokes))
+})
+ */
+router.post('/pokemons', async(req, res) => {
+    const {name, health, attack, defense, speed, height, weight, type } = req.body
+
+    const createPokemon = await Pokemon.create({
+            name: name,
+            health: health,
+            attack: attack,
+            defense: defense,
+            speed: speed,
+            height: height,
+            weight: weight,
+            created: true
+    })
+
+    const pokemonType = await Type.findAll({
+        where: {
+            name: type
+        }
+    })
+
+    createPokemon.addType(pokemonType)
+    res.send('Pokemon creado')
+})
 module.exports = router;
