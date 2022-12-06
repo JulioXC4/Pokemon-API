@@ -53,7 +53,7 @@ const getNextInfo = async(next, pokemons) => {
 }
 
 const getDbInfo = async() => {
-    return await Pokemon.findAll({
+    const pokemonsDB = (await Pokemon.findAll({
        include:{
            model: Type,
            attributes: ['name'],
@@ -61,7 +61,15 @@ const getDbInfo = async() => {
                attributes: [],
            }
        }
+   })).map(e => {
+    const pokemon = e.toJSON()
+    return {
+        ...pokemon,
+        type: pokemon.types.map(e => e.name)
+    }
    })
+
+   return pokemonsDB
 }
 
 const getPokemons = async() => {
@@ -84,6 +92,7 @@ const getPokemons = async() => {
         return {
             id: pokemonStatsData.id,
             name: pokemonStatsData.name,
+            img: pokemonStatsData.sprites.other["official-artwork"]["front_default"],
             health: stats[0],
             attack: stats[1],
             defense: stats[2],
