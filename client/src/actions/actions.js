@@ -21,16 +21,13 @@ export const postPokemon = (payload) => {
 
 export const getDetail = (id) => {
     return async function (dispatch){
-        try {
+       
             let pokemon = await axios.get(`http://localhost:3001/pokemons/${id}`)
-            return dispatch({
+            return dispatch ({
                 type: 'GET_DETAILS',
                 payload: pokemon.data
             })
-            
-        } catch (error) {
-            console.log(error)
-        }
+        
     }
 }
 

@@ -55,7 +55,7 @@ function rootReducer(state = initialState, action){
             }
             
         case 'ORDER_BY_NAME':
-            let sortedArray = action.payload === 'asc' ? 
+            let sortedNameArray = action.payload === 'asc' ? 
                 state.pokemons.sort(function(a,b){
                     if(a.name > b.name) return 1
                     if(b.name > a.name) return -1
@@ -71,7 +71,27 @@ function rootReducer(state = initialState, action){
 
                 return {
                     ...state,
-                    pokemons: sortedArray
+                    pokemons: sortedNameArray
+                }
+            
+        case 'ORDER_BY_ATTACK':
+            let sortedAttackArray = action.payload === 'asc' ? 
+                state.pokemons.sort(function(a,b){
+                    if(a.attack > b.attack) return 1
+                    if(b.attack > a.attack) return -1
+        
+                    return 0
+                }) :
+                state.pokemons.sort(function(a,b){
+                     if(a.attack > b.attack) return -1
+                    if(b.attack > a.attack) return 1
+        
+                    return 0
+                })
+        
+                return {
+                    ...state,
+                    pokemons: sortedAttackArray
                 }
         default:
             return{

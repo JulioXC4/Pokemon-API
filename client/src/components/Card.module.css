@@ -1,0 +1,26 @@
+*{
+  font-family: 'Poppins', sans-serif;
+}
+
+.imgPokemon{
+  width:240px;
+  height:240px;
+  background-color: azure;
+  border-radius: 20px;
+}
+
+.container{
+  position: relative;
+}
+
+.card{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  position: relative;
+  width: 320px;
+  height: 450px;
+  background: #232323;
+  border-radius: 20px;
+  overflow: hidden;
+}

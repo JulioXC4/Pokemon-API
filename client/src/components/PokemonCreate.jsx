@@ -65,7 +65,7 @@ export default function PokemonCreate() {
                     <label>Nombre: </label>
                     <input
                     type='text'
-                    value={input.name}
+                    value={input.name.toLowerCase()}
                     name="name"
                     onChange={handleChange}
                     />
